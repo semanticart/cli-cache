@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+cache_key=$1
+shift
+
+cache_dir=${CACHE_DIR:-$TMPDIR}
+cache_file="$cache_dir$cache_key"
+
+if test -f $cache_file; then
+	cat $cache_file
+else
+	"$@" | tee $cache_file
+	exit ${PIPESTATUS[0]}
+fi
