@@ -1,0 +1,17 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v1
+
+      - name: Setup bats
+        run: git clone https://github.com/sstephenson/bats.git
+
+      - name: Test
+        run: CACHE_DIR="$GITHUB_WORKSPACE/" ./bats/bin/bats test

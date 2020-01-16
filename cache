@@ -62,7 +62,12 @@ fresh () {
 
 	# if a ttl is specified, we need to check the last modified
 	# timestamp on the $cache_file
-	mtime=$(stat -f %m $cache_file)
+	if [[ "$OSTYPE" == "darwin"* ]]; then
+		mtime=$(stat -f %m $cache_file)
+	else
+		mtime=$(stat -c %Y $cache_file)
+	fi
+
 	now=$(date +%s)
 	remaining_time=$(($now - $mtime))
 
