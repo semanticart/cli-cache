@@ -13,6 +13,11 @@ do
 			shift # drop the key
 			shift # drop the value
 			;;
+		--cache-status)
+			acceptable_statuses="$2"
+			shift # drop the key
+			shift # drop the value
+			;;
 		*)    # default
 			positional+=("$1") # save it in an array for later
 			shift # drop the argument
@@ -53,8 +58,18 @@ fresh () {
 }
 
 if fresh; then
+	status=$(cat "$cache_file.cache-status")
 	cat $cache_file
 else
 	"$@" | tee $cache_file
-	exit ${PIPESTATUS[0]}
+	status=${PIPESTATUS[0]}
+
+	acceptable_statuses=${acceptable_statuses:-0}
+	if [[ $acceptable_statuses != "*" ]] && [[ ! " $acceptable_statuses " =~ " $status " ]]; then
+		rm $cache_file
+	else
+		echo $status > "$cache_file.cache-status"
+	fi
 fi
+
+exit $status
