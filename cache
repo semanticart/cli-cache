@@ -1,12 +1,58 @@
 #!/usr/bin/env bash
 
+set -e
+
+positional=()
+while [[ $# -gt 0 ]]
+do
+	key="$1"
+
+	case $key in
+		--ttl)
+			ttl="$2"
+			shift # drop the key
+			shift # drop the value
+			;;
+		*)    # default
+			positional+=("$1") # save it in an array for later
+			shift # drop the argument
+			;;
+	esac
+done
+
+set -- "${positional[@]}" # restore positional parameters
 cache_key=$1
 shift
 
 cache_dir=${CACHE_DIR:-$TMPDIR}
 cache_file="$cache_dir$cache_key"
 
-if test -f $cache_file; then
+fresh () {
+	# if the $cache_file doesn't exist, it can't be fresh
+	if [ ! -f $cache_file ]; then
+		return 1
+	fi
+
+	# if we don't have a ttl specifed, our $cache_file is
+	# fresh-enough
+	if [ -z "$ttl" ]; then
+		return 0
+	fi
+
+	# if a ttl is specified, we need to check the last modified
+	# timestamp on the $cache_file
+	mtime=$(stat -f %m $cache_file)
+	now=$(date +%s)
+	remaining_time=$(($now - $mtime))
+
+	if [ $remaining_time -lt $ttl ]; then
+		return 0
+	fi
+
+	return 1
+}
+
+if fresh; then
 	cat $cache_file
 else
 	"$@" | tee $cache_file

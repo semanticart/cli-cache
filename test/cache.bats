@@ -31,3 +31,19 @@ setup() {
   [ "$status" -eq 0 ]
   [ $output = "initial-value" ]
 }
+
+@test "respects a TTL" {
+  run ./cache --ttl 1 $TEST_KEY echo initial-value
+  [ "$status" -eq 0 ]
+  [ $output = "initial-value" ]
+
+  run ./cache --ttl 1 $TEST_KEY echo new-value
+  [ "$status" -eq 0 ]
+  [ $output = "initial-value" ]
+
+  sleep 1
+
+  run ./cache --ttl 1 $TEST_KEY echo third-value
+  [ "$status" -eq 0 ]
+  [ $output = "third-value" ]
+}
