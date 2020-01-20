@@ -101,3 +101,30 @@ setup() {
   [ "$status" -eq 2 ]
   echo $output | grep -- "usage: grep"
 }
+
+@test "parses options before and after the cache key" {
+  # fails because the status isn't allowed by our options
+  run ./cache --cache-status "2" $TEST_KEY exit 0
+  [ "$status" -eq 0 ]
+  [ ! -f "$TMPDIR$TEST_KEY" ]
+
+  # succeeds because the status is allowed by our option before the
+  # cache key
+  run ./cache --cache-status "0 2" $TEST_KEY exit 2
+  [ "$status" -eq 2 ]
+  [ -f "$TMPDIR$TEST_KEY" ]
+
+  rm "$TMPDIR$TEST_KEY"
+
+  # succeeds because the status is allowed by our option after the
+  # cache key
+  run ./cache $TEST_KEY --cache-status "0 2" exit 2
+  [ "$status" -eq 2 ]
+  [ -f "$TMPDIR$TEST_KEY" ]
+}
+
+@test "stops parsing options after the command starts" {
+  run ./cache $TEST_KEY echo --ttl 1 --help
+  [ "$status" -eq 0 ]
+  [ $output = "--ttl 1 --help" ]
+}

@@ -9,7 +9,6 @@ usage() {
 	echo "	--help		# show this help documentation"
 }
 
-positional=()
 while [[ $# -gt 0 ]]
 do
 	key="$1"
@@ -30,20 +29,21 @@ do
 			shift # drop the value
 			;;
 		--)
-			shift
-			positional+=("$@")
+			cache_key=$2
+			shift # drop the --
+			shift # drop the cache key
 			break
 			;;
-		*)    # default
-			positional+=("$1") # save it in an array for later
-			shift # drop the argument
+		*) # default
+			if [ -z "$cache_key" ]; then
+				cache_key=$1
+				shift
+			else
+				break;
+			fi
 			;;
 	esac
 done
-
-set -- "${positional[@]}" # restore positional parameters
-cache_key=$1
-shift
 
 cache_dir=${CACHE_DIR:-$TMPDIR}
 cache_file="$cache_dir$cache_key"
