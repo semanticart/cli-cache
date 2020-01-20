@@ -8,13 +8,13 @@ do
 	key="$1"
 
 	case $key in
-		--ttl)
-			ttl="$2"
+		--cache-status)
+			acceptable_statuses="$2"
 			shift # drop the key
 			shift # drop the value
 			;;
-		--cache-status)
-			acceptable_statuses="$2"
+		--ttl)
+			ttl="$2"
 			shift # drop the key
 			shift # drop the value
 			;;
