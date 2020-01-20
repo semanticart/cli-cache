@@ -2,6 +2,13 @@
 
 set -e
 
+usage() {
+	echo "usage: cache [--ttl SECONDS] [--cache-status CACHEABLE-STATUSES] [cache-key] [command] [args for command]"
+	echo "	--ttl SECONDS	# Treat previously cached content as fresh if fewer than SECONDS seconds have passed"
+	echo "	--cache-status	# Quoted and space-delimited exit statuses for [command] that are acceptable to cache."
+	echo "	--help		# show this help documentation"
+}
+
 positional=()
 while [[ $# -gt 0 ]]
 do
@@ -13,10 +20,19 @@ do
 			shift # drop the key
 			shift # drop the value
 			;;
+		--help)
+			usage
+			exit 0
+			;;
 		--ttl)
 			ttl="$2"
 			shift # drop the key
 			shift # drop the value
+			;;
+		--)
+			shift
+			positional+=("$@")
+			break
 			;;
 		*)    # default
 			positional+=("$1") # save it in an array for later

@@ -87,3 +87,17 @@ setup() {
   run ./cache --cache-status "*" $TEST_KEY exit 9
   [ "$status" -eq 3 ]
 }
+
+@test "documents options with --help" {
+  run ./cache --help
+  [ "$status" -eq 0 ]
+  echo $output | grep -- --ttl
+  echo $output | grep -- --cache-status
+  echo $output | grep -- --help
+}
+
+@test "stops parsing arguments after --" {
+  run ./cache --ttl 1 -- $TEST_KEY grep --help
+  [ "$status" -eq 2 ]
+  echo $output | grep -- "usage: grep"
+}
