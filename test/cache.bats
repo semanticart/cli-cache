@@ -196,3 +196,15 @@ wait_for_second_to_pass() {
   [ "$status" -eq 0 ]
   [ "$output" = "2" ]
 }
+
+@test "exits with an error message when no cache-key is provided" {
+  run ./cache
+  [ "$status" -eq 64 ]
+  [ "$output" = "Error: You must provide a cache key and command" ]
+}
+
+@test "exits with an error message when no command is provided" {
+  run ./cache $TEST_KEY
+  [ "$status" -eq 64 ]
+  [ "$output" = "Error: You must provide a command" ]
+}

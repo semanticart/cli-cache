@@ -57,6 +57,16 @@ do
 	esac
 done
 
+if [ -z "$cache_key" ]; then
+	echo "Error: You must provide a cache key and command"
+	exit 64
+fi
+
+if [ -z "$1" ]; then
+	echo "Error: You must provide a command"
+	exit 64
+fi
+
 cache_dir=${CACHE_DIR:-$TMPDIR}
 cache_file="$cache_dir$cache_key"
 
