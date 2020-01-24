@@ -92,9 +92,9 @@ setup() {
 @test "documents options with --help" {
   run ./cache --help
   [ "$status" -eq 0 ]
-  echo $output | grep -- --ttl
-  echo $output | grep -- --cache-status
-  echo $output | grep -- --help
+  echo "$output" | grep -- --ttl
+  echo "$output" | grep -- --cache-status
+  echo "$output" | grep -- --help
 }
 
 @test "stops parsing arguments after --" {
@@ -102,10 +102,10 @@ setup() {
 
   if [[ "$OSTYPE" == "darwin"* ]]; then
 	[ "$status" -eq 2 ]
-	echo $output | grep -- "usage: grep"
+	echo "$output" | grep -- "usage: grep"
   else
 	[ "$status" -eq 0 ]
-	echo $output | grep -- "Usage: grep"
+	echo "$output" | grep -- "Usage: grep"
   fi
 }
 
