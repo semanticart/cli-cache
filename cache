@@ -50,7 +50,7 @@ cache_file="$cache_dir$cache_key"
 
 fresh () {
 	# if the $cache_file doesn't exist, it can't be fresh
-	if [ ! -f $cache_file ]; then
+	if [ ! -f "$cache_file" ]; then
 		return 1
 	fi
 
@@ -63,15 +63,15 @@ fresh () {
 	# if a ttl is specified, we need to check the last modified
 	# timestamp on the $cache_file
 	if [[ "$OSTYPE" == "darwin"* ]]; then
-		mtime=$(stat -f %m $cache_file)
+		mtime=$(stat -f %m "$cache_file")
 	else
-		mtime=$(stat -c %Y $cache_file)
+		mtime=$(stat -c %Y "$cache_file")
 	fi
 
 	now=$(date +%s)
-	remaining_time=$(($now - $mtime))
+	remaining_time=$((now - mtime))
 
-	if [ $remaining_time -lt $ttl ]; then
+	if [ $remaining_time -lt "$ttl" ]; then
 		return 0
 	fi
 
@@ -80,17 +80,18 @@ fresh () {
 
 if fresh; then
 	status=$(cat "$cache_file.cache-status")
-	cat $cache_file
+	cat "$cache_file"
 else
-	"$@" | tee $cache_file
+	"$@" | tee "$cache_file"
 	status=${PIPESTATUS[0]}
 
 	acceptable_statuses=${acceptable_statuses:-0}
-	if [[ $acceptable_statuses != "*" ]] && [[ ! " $acceptable_statuses " =~ " $status " ]]; then
-		rm $cache_file
+	# shellcheck disable=SC2076
+	if [[ $acceptable_statuses != "*" ]] && [[ ! " $acceptable_statuses " = *" $status "* ]]; then
+		rm "$cache_file"
 	else
-		echo $status > "$cache_file.cache-status"
+		echo "$status" > "$cache_file.cache-status"
 	fi
 fi
 
-exit $status
+exit "$status"
