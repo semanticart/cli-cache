@@ -9,8 +9,4 @@ usage: cache [--ttl SECONDS] [--cache-status CACHEABLE-STATUSES] [cache-key] [co
         --help          # show this help documentation
 ```
 
-Read about the development
-
-- https://blog.semanticart.com/2020/01/11/tdd-a-cli-caching-script-part-one/
-- https://blog.semanticart.com/2020/01/18/tdd-a-cli-caching-script-part-two/
-- https://blog.semanticart.com/2020/01/23/tdd-a-cli-caching-script-part-three/
+[Read about the development](https://blog.semanticart.com/tags/cli-cache/).
