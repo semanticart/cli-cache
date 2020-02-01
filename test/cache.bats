@@ -1,9 +1,24 @@
 setup() {
   export TEST_KEY="cache-tests-key"
   export CACHE_DIR=${CACHE_DIR:-$TMPDIR}
+  export LAST_SECOND=""
 
   # clean up any old cache file (-f because we don't care if it exists or not)
   rm -f "$CACHE_DIR$TEST_KEY"
+}
+
+wait_for_second_to_pass() {
+	now=$(date +%s)
+
+	if [ -z "$LAST_SECOND" ]; then
+		LAST_SECOND=$now
+	else
+		if [ "$now" -gt "$LAST_SECOND" ]; then
+			return 0
+		fi
+	fi
+
+	wait_for_second_to_pass
 }
 
 @test "initial run is uncached" {
@@ -42,7 +57,7 @@ setup() {
   [ "$status" -eq 0 ]
   [ "$output" = "initial-value" ]
 
-  sleep 1
+  wait_for_second_to_pass
 
   run ./cache --ttl 1 $TEST_KEY echo third-value
   [ "$status" -eq 0 ]
@@ -94,6 +109,7 @@ setup() {
   [ "$status" -eq 0 ]
   echo "$output" | grep -- --ttl
   echo "$output" | grep -- --cache-status
+  echo "$output" | grep -- --stale-while-revalidate
   echo "$output" | grep -- --help
 }
 
@@ -134,4 +150,49 @@ setup() {
   run ./cache $TEST_KEY echo --ttl 1 --help
   [ "$status" -eq 0 ]
   [ "$output" = "--ttl 1 --help" ]
+}
+
+@test "--stale-while-revalidate does not trigger a background update if we're in the TTL" {
+  run ./cache --stale-while-revalidate 1 --ttl 1 $TEST_KEY echo 1
+  [ "$status" -eq 0 ]
+  [ "$output" = "1" ]
+  [ -f "$CACHE_DIR$TEST_KEY" ]
+
+  run ./cache --stale-while-revalidate 1 --ttl 1 $TEST_KEY echo 2
+  [ "$status" -eq 0 ]
+  [ "$output" = "1" ]
+
+  [ "$(cat "$CACHE_DIR$TEST_KEY")" = "1" ]
+}
+
+@test "--stale-while-revalidate triggers a background update if we're outside the TTL but inside the SWR seconds" {
+  run ./cache --stale-while-revalidate 1 --ttl 1 $TEST_KEY echo 1
+  [ "$status" -eq 0 ]
+  [ "$output" = "1" ]
+  [ -f "$CACHE_DIR$TEST_KEY" ]
+
+  wait_for_second_to_pass
+
+  run ./cache --stale-while-revalidate 1 --ttl 1 $TEST_KEY echo 2
+  [ "$status" -eq 0 ]
+  [ "$output" = "1" ]
+
+  [ "$(cat "$CACHE_DIR$TEST_KEY")" = "2" ]
+
+  # and now the updated value is used
+  run ./cache --stale-while-revalidate 1 --ttl 1 $TEST_KEY echo 3
+  [ "$status" -eq 0 ]
+  [ "$output" = "2" ]
+}
+
+@test "--stale-while-revalidate falls back to synchronous behavior if we're outside the TTL and SWR seconds" {
+  run ./cache --stale-while-revalidate 1 --ttl 1 $TEST_KEY echo 1
+  [ "$status" -eq 0 ]
+  [ "$output" = "1" ]
+
+  wait_for_second_to_pass
+
+  run ./cache --stale-while-revalidate 1 --ttl 0 $TEST_KEY echo 2
+  [ "$status" -eq 0 ]
+  [ "$output" = "2" ]
 }

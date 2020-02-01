@@ -2,11 +2,14 @@
 
 set -e
 
+original_args=$*
+
 usage() {
-	echo "usage: cache [--ttl SECONDS] [--cache-status CACHEABLE-STATUSES] [cache-key] [command] [args for command]"
-	echo "	--ttl SECONDS	# Treat previously cached content as fresh if fewer than SECONDS seconds have passed"
-	echo "	--cache-status	# Quoted and space-delimited exit statuses for [command] that are acceptable to cache."
-	echo "	--help		# show this help documentation"
+	echo "usage: cache [--ttl SECONDS] [--cache-status CACHEABLE-STATUSES] [--stale_while_revalidate SECONDS] [cache-key] [command] [args for command]"
+	echo "	--ttl				# Treat previously cached content as fresh if fewer than SECONDS seconds have passed"
+	echo "	--cache-status			# Quoted and space-delimited exit statuses for [command] that are acceptable to cache."
+	echo "	--stale-while-revalidate	# Serve stale content for SECONDS past TTL while updating in the background"
+	echo "	--help				# show this help documentation"
 }
 
 while [[ $# -gt 0 ]]
@@ -19,9 +22,18 @@ do
 			shift # drop the key
 			shift # drop the value
 			;;
+		--force-stale)
+			force_stale=1
+			shift # drop the key
+			;;
 		--help)
 			usage
 			exit 0
+			;;
+		--stale-while-revalidate)
+			stale_while_revalidate="$2"
+			shift # drop the key
+			shift # drop the value
 			;;
 		--ttl)
 			ttl="$2"
@@ -75,11 +87,17 @@ fresh () {
 		return 0
 	fi
 
+	if [ $remaining_time -lt $((ttl + stale_while_revalidate)) ]; then
+		update_in_background=1
+		return 0
+	fi
+
 	return 1
 }
 
-if fresh; then
+if [ -z "$force_stale" ] && fresh; then
 	status=$(cat "$cache_file.cache-status")
+
 	cat "$cache_file"
 else
 	"$@" | tee "$cache_file"
@@ -91,6 +109,19 @@ else
 	else
 		echo "$status" > "$cache_file.cache-status"
 	fi
+fi
+
+if [ "$update_in_background" = "1" ]; then
+	# We re-run the original command with the original args + --force-stale to
+	# prevent the possibility of leveraging --stale-while-revalidate again.
+	#
+	# the & puts this in the background
+	# the > /dev/null mean the STDOUT of the command won't show up in the
+	# current script's output
+	#
+	#
+	# shellcheck disable=SC2086
+	${BASH_SOURCE[0]} --force-stale $original_args > /dev/null &
 fi
 
 exit "$status"
