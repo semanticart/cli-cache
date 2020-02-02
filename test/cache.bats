@@ -109,6 +109,7 @@ wait_for_second_to_pass() {
   [ "$status" -eq 0 ]
   echo "$output" | grep -- --ttl
   echo "$output" | grep -- --cache-status
+  echo "$output" | grep -- --check
   echo "$output" | grep -- --stale-while-revalidate
   echo "$output" | grep -- --help
 }
@@ -207,4 +208,32 @@ wait_for_second_to_pass() {
   run ./cache $TEST_KEY
   [ "$status" -eq 64 ]
   [ "$output" = "Error: You must provide a command" ]
+}
+
+@test "--check returns 0 if the content exists and is inside the TTL/SWR" {
+  run ./cache $TEST_KEY echo 1
+  [ "$status" -eq 0 ]
+  [ "$output" = "1" ]
+
+  run ./cache --stale-while-revalidate 1 --ttl 1 --check $TEST_KEY
+  [ "$status" -eq 0 ]
+  [ "$output" = "" ]
+}
+
+@test "--check returns 1 if the content exists but is outside the TTL/SWR" {
+  run ./cache $TEST_KEY echo 1
+  [ "$status" -eq 0 ]
+  [ "$output" = "1" ]
+
+  wait_for_second_to_pass
+
+  run ./cache --stale-while-revalidate 1 --ttl 0 --check $TEST_KEY
+  [ "$status" -eq 1 ]
+  [ "$output" = "" ]
+}
+
+@test "--check returns 1 if the content is not yet cached" {
+  run ./cache --check $TEST_KEY
+  [ "$status" -eq 1 ]
+  [ "$output" = "" ]
 }
