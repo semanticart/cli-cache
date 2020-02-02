@@ -8,6 +8,7 @@ usage() {
 	echo "usage: cache [--ttl SECONDS] [--cache-status CACHEABLE-STATUSES] [--stale_while_revalidate SECONDS] [cache-key] [command] [args for command]"
 	echo "	--ttl				# Treat previously cached content as fresh if fewer than SECONDS seconds have passed"
 	echo "	--cache-status			# Quoted and space-delimited exit statuses for [command] that are acceptable to cache."
+	echo "	--check				# Returns 0 if the content is cached and 1 if content is uncached or the TTL/SWR conditions are unmet."
 	echo "	--stale-while-revalidate	# Serve stale content for SECONDS past TTL while updating in the background"
 	echo "	--help				# show this help documentation"
 }
@@ -21,6 +22,10 @@ do
 			acceptable_statuses="$2"
 			shift # drop the key
 			shift # drop the value
+			;;
+		--check)
+			check_only=0
+			shift; # drop the key
 			;;
 		--force-stale)
 			force_stale=1
@@ -62,7 +67,7 @@ if [ -z "$cache_key" ]; then
 	exit 64
 fi
 
-if [ -z "$1" ]; then
+if [ -z "$1" ] && [ -z "$check_only" ]; then
 	echo "Error: You must provide a command"
 	exit 64
 fi
@@ -106,10 +111,14 @@ fresh () {
 }
 
 if [ -z "$force_stale" ] && fresh; then
+	[ -n "$check_only" ] && exit 0
+
 	status=$(cat "$cache_file.cache-status")
 
 	cat "$cache_file"
 else
+	[ -n "$check_only" ] && exit 1
+
 	"$@" | tee "$cache_file"
 	status=${PIPESTATUS[0]}
 
