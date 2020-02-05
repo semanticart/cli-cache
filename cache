@@ -35,6 +35,10 @@ do
 			usage
 			exit 0
 			;;
+		--purge)
+			purge=0
+			shift # drop the key
+			;;
 		--stale-while-revalidate)
 			stale_while_revalidate="$2"
 			shift # drop the key
@@ -67,13 +71,20 @@ if [ -z "$cache_key" ]; then
 	exit 64
 fi
 
+cache_dir=${CACHE_DIR:-$TMPDIR}
+cache_file="$cache_dir$cache_key"
+
+if [ -n "$purge" ]; then
+	if [ -f "$cache_file" ]; then
+		rm "$cache_file"
+	fi
+	exit 0
+fi
+
 if [ -z "$1" ] && [ -z "$check_only" ]; then
 	echo "Error: You must provide a command"
 	exit 64
 fi
-
-cache_dir=${CACHE_DIR:-$TMPDIR}
-cache_file="$cache_dir$cache_key"
 
 fresh () {
 	# if the $cache_file doesn't exist, it can't be fresh

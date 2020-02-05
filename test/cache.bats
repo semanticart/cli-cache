@@ -237,3 +237,25 @@ wait_for_second_to_pass() {
   [ "$status" -eq 1 ]
   [ "$output" = "" ]
 }
+
+@test "--purge exits with 0 if the content is not yet cached" {
+  [ ! -f "$CACHE_DIR$TEST_KEY" ]
+
+  run ./cache --purge $TEST_KEY
+  [ "$status" -eq 0 ]
+  [ "$output" = "" ]
+
+  [ ! -f "$CACHE_DIR$TEST_KEY" ]
+}
+
+@test "--purge exits with 0 and removes the file if the content is cached" {
+  touch "$CACHE_DIR$TEST_KEY"
+
+  [ -f "$CACHE_DIR$TEST_KEY" ]
+
+  run ./cache --purge $TEST_KEY
+  [ "$status" -eq 0 ]
+  [ "$output" = "" ]
+
+  [ ! -f "$CACHE_DIR$TEST_KEY" ]
+}
