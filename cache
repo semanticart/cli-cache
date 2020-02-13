@@ -9,6 +9,7 @@ usage() {
 	echo "	--ttl				# Treat previously cached content as fresh if fewer than SECONDS seconds have passed"
 	echo "	--cache-status			# Quoted and space-delimited exit statuses for [command] that are acceptable to cache."
 	echo "	--check				# Returns 0 if the content is cached and 1 if content is uncached or the TTL/SWR conditions are unmet."
+	echo "	--purge				# Remove any cached content at [cache-key]"
 	echo "	--stale-while-revalidate	# Serve stale content for SECONDS past TTL while updating in the background"
 	echo "	--help				# show this help documentation"
 }

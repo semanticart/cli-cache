@@ -110,6 +110,7 @@ wait_for_second_to_pass() {
   echo "$output" | grep -- --ttl
   echo "$output" | grep -- --cache-status
   echo "$output" | grep -- --check
+  echo "$output" | grep -- --purge
   echo "$output" | grep -- --stale-while-revalidate
   echo "$output" | grep -- --help
 }
