@@ -125,9 +125,13 @@ fresh () {
 if [ -z "$force_stale" ] && fresh; then
 	[ -n "$check_only" ] && exit 0
 
-	status=$(cat "$cache_file.cache-status")
-
-	cat "$cache_file"
+	if status=$(cat  2> /dev/null "$cache_file.cache-status"); then
+		cat "$cache_file"
+	else
+		rm "$cache_file"
+		echo "No .cache-status file was found. Please re-run your command."
+		exit 1
+	fi
 else
 	[ -n "$check_only" ] && exit 1
 

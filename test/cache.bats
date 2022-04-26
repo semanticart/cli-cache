@@ -260,3 +260,17 @@ wait_for_second_to_pass() {
 
   [ ! -f "$CACHE_DIR$TEST_KEY" ]
 }
+
+@test "exits with an error if the cache status file exists but the cache file doesn't exist" {
+  # Handle an interrupted run (ctrl-c) leaving a bad state
+
+  run ./cache $TEST_KEY echo initial-value
+  [ "$status" -eq 0 ]
+  [ "$output" = "initial-value" ]
+
+  rm "$CACHE_DIR$TEST_KEY.cache-status"
+
+  run ./cache $TEST_KEY echo new-value
+  [ "$status" -eq 1 ]
+  [ "$output" = "No .cache-status file was found. Please re-run your command." ]
+}
